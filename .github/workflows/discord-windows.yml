@@ -13,11 +13,22 @@ jobs:
   portable:
     runs-on: windows-latest
     timeout-minutes: 60
+    env:
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/.vcpkg-cache
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Restore compiled build dependencies
+        id: dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: .vcpkg-cache
+          key: kai-vcpkg-v1-${{ runner.os }}-${{ hashFiles('build/windows/pins.json', 'build/windows/prepare.py') }}
+      - name: Create build dependency cache
+        shell: pwsh
+        run: New-Item -ItemType Directory -Force -Path $env:VCPKG_DEFAULT_BINARY_CACHE | Out-Null
       - name: Build and test existing Kai portable
         shell: pwsh
         run: ./build/windows/build-portable.ps1
@@ -39,6 +50,14 @@ jobs:
           path: |
             .build-rpc/kai-original/**/stremio.exe
             .build-rpc/community-original/**/stremio.exe
+            .build-rpc/portable-smoke/*.log
+            .build-rpc/portable-smoke/app/portable_config/errors-*.txt
           if-no-files-found: ignore
           include-hidden-files: true
           retention-days: 7
+      - name: Save compiled build dependencies
+        if: always() && steps.dependencies.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .vcpkg-cache
+          key: ${{ steps.dependencies.outputs.cache-primary-key }}

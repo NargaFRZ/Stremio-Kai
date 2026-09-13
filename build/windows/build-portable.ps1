@@ -113,11 +113,20 @@ Get-ChildItem -LiteralPath $kaiRoot -File -Recurse | ForEach-Object {
 
 $notes = Join-Path $package 'CUSTOM-RPC-BUILD'
 New-Item -ItemType Directory -Path $notes | Out-Null
+$smoke = Join-Path $work 'portable-smoke'
+Invoke-Native python @((Join-Path $PSScriptRoot 'smoke-portable.py'), $package, $smoke)
+Copy-Item (Join-Path $smoke 'smoke-result.json') $notes
 Copy-Item (Join-Path $repo 'build/discord/README.md') (Join-Path $notes 'README.md')
 Copy-Item (Join-Path $repo 'tests/DISCORD-DESKTOP-CHECKLIST.md') (Join-Path $notes 'DISCORD-DESKTOP-CHECKLIST.md')
 Copy-Item (Join-Path $PSScriptRoot 'pins.json') $notes
 Copy-Item (Join-Path $source 'deps/discord-rpc/LICENSE') (Join-Path $notes 'DISCORD-RPC-LICENSE.txt')
 Copy-Item (Join-Path $source 'deps/discord-rpc/thirdparty/rapidjson/license.txt') (Join-Path $notes 'RAPIDJSON-LICENSE.txt')
+Copy-Item (Join-Path $repo 'LICENSE.md') (Join-Path $notes 'KAI-LICENSE.md')
+$thirdParty = Join-Path $notes 'THIRD-PARTY'
+New-Item -ItemType Directory -Path $thirdParty | Out-Null
+Get-ChildItem (Join-Path $build 'vcpkg_installed/x64-windows-static/share') -Filter copyright -File -Recurse | ForEach-Object {
+    Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $thirdParty "$($_.Directory.Name)-LICENSE.txt")
+}
 @{
     kai_base_commit = $pins.kai_commit
     custom_commit = $customCommit
@@ -128,6 +137,7 @@ Copy-Item (Join-Path $source 'deps/discord-rpc/thirdparty/rapidjson/license.txt'
     vcpkg_commit = $vcpkgCommit
     built_at_utc = [DateTime]::UtcNow.ToString('o')
     rpc_payload_tests = 'passed on Windows'
+    packaged_windows_startup = 'passed twice: window, MPV initialization, bundled Node/WebView2, activity events and normal shutdown'
     discord_desktop_acceptance = 'NOT TESTED: requires a signed-in Discord desktop client and another user'
 } | ConvertTo-Json | Set-Content (Join-Path $notes 'build-manifest.json') -Encoding utf8
 
@@ -135,7 +145,7 @@ Copy-Item (Join-Path $source 'deps/discord-rpc/thirdparty/rapidjson/license.txt'
 # the portable. Runtime binaries remain in the original portable distribution.
 $sourceBundle = Join-Path $work 'source-bundle'
 New-Item -ItemType Directory -Path $sourceBundle | Out-Null
-Copy-Item (Join-Path $repo 'LICENSE') (Join-Path $sourceBundle 'KAI-LICENSE.txt')
+Copy-Item (Join-Path $repo 'LICENSE.md') (Join-Path $sourceBundle 'KAI-LICENSE.md')
 Invoke-Native git @('-C', $repo, 'archive', '--format=zip', "--output=$(Join-Path $sourceBundle 'kai-source-and-build-recipe.zip')", 'HEAD')
 Push-Location $source
 try {

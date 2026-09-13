@@ -13,9 +13,11 @@ configuration, webmods and existing application logic are unchanged.
 | Source preparation against clean pinned native/SDK checkouts | Passed; prepared adapter bytes match tested source |
 | Native and SDK patch whitespace validation | Passed |
 | Python preparation script and workflow YAML parsing | Passed |
-| PowerShell execution / Windows CMake compilation | Windows runner available; build in progress |
+| PowerShell execution / Windows CMake compilation | Passed on Windows Server 2025 with Visual Studio 2026 (MSVC 14.51 toolset) |
+| Windows Release adapter/serializer and SDK queue tests | Both test programs passed (73 checks) |
+| Original Kai resources on rebuilt native executable | All 12 resources preserved and verified byte for byte |
 | Official Kai native EXE versus documented Community base | All non-resource sections match Community 5.0.21 byte for byte; Kai has different embedded resources |
-| Complete Windows portable ZIP / installer | Not generated |
+| Complete Windows portable ZIP / installer | Packaging in progress; first compilation passed, archive creation stopped on an incorrect license filename (corrected) |
 | Live Discord compact activity from another account | Not run |
 | Live expanded activity and full playback regressions | Not run |
 
@@ -30,6 +32,11 @@ have started. Run `34730381554` established the native code/data identity; the
 initial whole-file comparison correctly detected Kai's different PE resources.
 The packaging workflow now verifies native code/data identity and preserves all
 original Kai resources, with a byte-for-byte verification after copying them.
+Run `34756303061` compiled the Windows executable, passed both CTest programs,
+preserved all resources and passed runtime-file completeness/integrity checks.
+Final archive creation stopped at `LICENSE` instead of the existing `LICENSE.md`.
+The recipe now uses the correct filename and adds two packaged-app launch/exit
+checks before writing the final portable ZIP.
 
 After a successful package is produced, the separate desktop checklist is still
 required. This task is **incomplete** until the usable Windows package exists

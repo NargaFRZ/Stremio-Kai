@@ -81,6 +81,11 @@ target_link_libraries(kai_presence_tests PRIVATE user32)
 if(MSVC)
     target_compile_options(stremio PRIVATE /utf-8)
     target_compile_options(kai_presence_tests PRIVATE /utf-8)
+    # The SDK is C++ behind an extern-C interface. Keep C++ exceptions catchable
+    # at the adapter boundary and in the test's deliberately throwing RPC double.
+    target_compile_options(discord-rpc PRIVATE /EHsc-)
+    set_source_files_properties(src/utils/discord.cpp tests/discord-presence.cpp
+        PROPERTIES COMPILE_OPTIONS "/EHsc-")
 endif()
 add_test(NAME discord_presence COMMAND kai_presence_tests)
 
