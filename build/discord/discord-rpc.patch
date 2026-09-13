@@ -1,0 +1,77 @@
+diff --git a/include/discord_rpc.h b/include/discord_rpc.h
+index 9470434..af1006c 100644
+--- a/include/discord_rpc.h
++++ b/include/discord_rpc.h
+@@ -23,6 +23,11 @@
+ extern "C" {
+ #endif
+ 
++#define DISCORD_ACTIVITY_TYPE_WATCHING 3
++#define DISCORD_STATUS_DISPLAY_TYPE_NAME 0
++#define DISCORD_STATUS_DISPLAY_TYPE_STATE 1
++#define DISCORD_STATUS_DISPLAY_TYPE_DETAILS 2
++
+ typedef struct DiscordRichPresence {
+     const char* state;   /* max 128 bytes */
+     const char* details; /* max 128 bytes */
+@@ -40,6 +45,12 @@ typedef struct DiscordRichPresence {
+     const char* joinSecret;     /* max 128 bytes */
+     const char* spectateSecret; /* max 128 bytes */
+     int8_t instance;
++    int type;
++    int statusDisplayType;
++    const char* button1Label;
++    const char* button1Url;
++    const char* button2Label;
++    const char* button2Url;
+ } DiscordRichPresence;
+ 
+ typedef struct DiscordUser {
+diff --git a/src/discord_rpc.cpp b/src/discord_rpc.cpp
+index 0392453..c49f775 100644
+--- a/src/discord_rpc.cpp
++++ b/src/discord_rpc.cpp
+@@ -224,7 +224,8 @@ static void Discord_UpdateConnection(void)
+             if (!Connection->Write(local.buffer, local.length)) {
+                 // if we fail to send, requeue
+                 std::lock_guard<std::mutex> guard(PresenceMutex);
+-                QueuedPresence.Copy(local);
++                // QueuedPresence still holds this packet, or a newer one.
++                // Never overwrite a newer title/clear queued during a failed write.
+                 UpdatePresence.exchange(true);
+             }
+         }
+diff --git a/src/serialization.cpp b/src/serialization.cpp
+index 70efa63..51b3dc9 100644
+--- a/src/serialization.cpp
++++ b/src/serialization.cpp
+@@ -108,6 +108,29 @@ size_t JsonWriteRichPresenceObj(char* dest,
+                 WriteOptionalString(writer, "state", presence->state);
+                 WriteOptionalString(writer, "details", presence->details);
+ 
++                WriteKey(writer, "type");
++                writer.Int(presence->type);
++                WriteKey(writer, "status_display_type");
++                writer.Int(presence->statusDisplayType);
++
++                const bool button1 = presence->button1Label && presence->button1Label[0] &&
++                                     presence->button1Url && presence->button1Url[0];
++                const bool button2 = presence->button2Label && presence->button2Label[0] &&
++                                     presence->button2Url && presence->button2Url[0];
++                if (button1 || button2) {
++                    WriteArray buttons(writer, "buttons");
++                    if (button1) {
++                        WriteObject button(writer);
++                        WriteOptionalString(writer, "label", presence->button1Label);
++                        WriteOptionalString(writer, "url", presence->button1Url);
++                    }
++                    if (button2) {
++                        WriteObject button(writer);
++                        WriteOptionalString(writer, "label", presence->button2Label);
++                        WriteOptionalString(writer, "url", presence->button2Url);
++                    }
++                }
++
+                 if (presence->startTimestamp || presence->endTimestamp) {
+                     WriteObject timestamps(writer, "timestamps");
+ 

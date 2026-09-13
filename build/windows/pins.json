@@ -1,0 +1,27 @@
+{
+  "kai_commit": "a5a2a37e818fb5e9406caf65af374fa7fe7700af",
+  "native": {
+    "repository": "https://github.com/Zaarrg/stremio-community-v5.git",
+    "commit": "da0783dfd8e067b97a95d11e33c78936f523c4d3"
+  },
+  "rpc": {
+    "repository": "https://github.com/discord/discord-rpc.git",
+    "commit": "963aa9f3e5ce81a4682c6ca3d136cddda614db33"
+  },
+  "rapidjson": {
+    "repository": "https://github.com/Tencent/rapidjson.git",
+    "commit": "f54b0e47a08782a6131cc3d60f94d038fa6e0a51"
+  },
+  "mpv": {
+    "repository": "https://github.com/Zaarrg/libmpv.git",
+    "commit": "d57999b78b2d7b22f32f3a827a44903fdaa59e62"
+  },
+  "kai_portable": {
+    "url": "https://github.com/allecsc/Stremio-Kai/releases/download/v4.8.0/Stremio-Kai_v4.8.0.7z",
+    "sha256": "12781dcc0d6a0f8d937cef17adc81400e501f29b1a29fb8e3dfc6335d6c927c9"
+  },
+  "native_portable": {
+    "url": "https://github.com/Zaarrg/stremio-community-v5/releases/download/5.0.0-beta.21/Stremio.5.0.21-x64.7z",
+    "sha256": "47fd5da5f69d81c1e141a06fdeb116dbacc7174cb14467445e6e6106a9f40adc"
+  }
+}
