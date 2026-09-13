@@ -46,11 +46,12 @@ and compact view layouts may differ; no local mock can prove how another user's
 Discord renders this. The supplied source patch rebuilds both the SDK header and
 serializer together, avoiding an incompatible struct/prebuilt-library ABI.
 
-The exact native binary shipped inside Kai has not been inspected here. Before
-using the documented base sources, the packaging workflow compares Kai's original
-`stremio.exe` against the original Community 5.0.21 release executable. If they
-differ, it stops and requires matching Kai native sources. This check must not be
-disabled merely to obtain a build.
+The shipped Kai executable was compared against Community 5.0.21 on the Windows
+runner. Every non-resource section, including native code and data, matches byte
+for byte. Kai changes the embedded PE resources. Packaging enforces that identity
+before building the documented source base, then copies every original Kai
+resource onto the rebuilt executable and verifies those resources byte for byte.
+A code/data mismatch still stops the build.
 
 ## Playback behavior
 
