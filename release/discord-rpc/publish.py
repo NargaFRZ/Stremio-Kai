@@ -86,7 +86,9 @@ def main():
     release = next((item for item in releases if item["tag_name"] == TAG), None)
     if release is None:
         release_command("create", TAG, "--target", SOURCE, "--title", TITLE, "--notes-file", str(NOTES), "--draft")
-        release = api(f"releases/tags/{TAG}")
+        # GitHub's tag endpoint returns published releases, so find this draft by ID.
+        release = next(item for item in api("releases?per_page=100") if item["tag_name"] == TAG)
+    release_path = f"releases/{release['id']}"
     require(release["target_commitish"] == SOURCE, "Existing release target differs")
     require(release["name"] == TITLE and release["body"].strip() == NOTES.read_text().strip(), "Existing release notes differ")
     present = verify_assets(release, expected, complete=not release["draft"])
@@ -94,10 +96,10 @@ def main():
         for name in sorted(FILES - set(present)):
             print(f"Uploading {name}", flush=True)
             release_command("upload", TAG, str(assets_dir / name))
-        release = api(f"releases/tags/{TAG}")
+        release = api(release_path)
         verify_assets(release, expected, complete=True)
         release_command("edit", TAG, "--draft=false", "--latest")
-    release = api(f"releases/tags/{TAG}")
+    release = api(release_path)
     require(not release["draft"] and release["published_at"], "Release was not published")
     verify_assets(release, expected, complete=True)
     tag = api(f"git/ref/tags/{TAG}")
