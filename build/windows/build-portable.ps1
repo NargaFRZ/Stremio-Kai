@@ -62,31 +62,10 @@ $kaiRoot = Find-AppRoot (Join-Path $work 'kai-original')
 $communityRoot = Find-AppRoot (Join-Path $work 'community-original')
 $originalExeHash = (Get-FileHash (Join-Path $kaiRoot 'stremio.exe') -Algorithm SHA256).Hash
 $communityExeHash = (Get-FileHash (Join-Path $communityRoot 'stremio.exe') -Algorithm SHA256).Hash
-if ($originalExeHash -ne $communityExeHash) {
-    Invoke-Native python @((Join-Path $PSScriptRoot 'inspect-native.py'),
-        (Join-Path $kaiRoot 'stremio.exe'), (Join-Path $communityRoot 'stremio.exe'))
-    $candidates = Get-Content (Join-Path $PSScriptRoot 'native-candidates.json') -Raw | ConvertFrom-Json
-    foreach ($candidate in $candidates) {
-        $installer = Join-Path $work "$($candidate.tag).exe"
-        $expanded = Join-Path $work $candidate.tag
-        Get-VerifiedArchive $candidate $installer
-        Invoke-Native $sevenZip @('x', $installer, "-o$expanded", '-y')
-        Get-ChildItem -LiteralPath $expanded -Filter stremio.exe -File -Recurse | ForEach-Object {
-            Write-Host "Inspecting candidate $($candidate.tag): $($_.FullName)"
-            Invoke-Native python @((Join-Path $PSScriptRoot 'inspect-native.py'), $_.FullName)
-            if ((Get-FileHash -LiteralPath $_.FullName).Hash -eq $originalExeHash) {
-                Write-Host "EXACT NATIVE MATCH: $($candidate.tag) installer"
-            }
-        }
-    }
-    throw @"
-Kai's native stremio.exe differs from the documented Community 5.0.21 base.
-Packaging has stopped before replacing anything. Obtain matching native source
-from the Kai maintainer; substituting another shell could remove Kai features.
-Kai SHA256: $originalExeHash
-Community SHA256: $communityExeHash
-"@
-}
+# The shipped EXEs differ in PE resources only. Require identical native code,
+# data, imports and loader behavior before compiling the documented base.
+Invoke-Native python @((Join-Path $PSScriptRoot 'inspect-native.py'), '--verify-resource-variant',
+    (Join-Path $kaiRoot 'stremio.exe'), (Join-Path $communityRoot 'stremio.exe'))
 
 $source = Join-Path $work 'native'
 Initialize-Checkout $pins.native $source
@@ -104,6 +83,8 @@ Invoke-Native cmake @('-S', $source, '-B', $build, '-A', 'x64',
     '-DCLANG_FORMAT_SUFFIX=none', "-DKAI_RUNTIME_MPV=$(Join-Path $kaiRoot 'libmpv-2.dll')")
 Invoke-Native cmake @('--build', $build, '--config', 'Release', '--target', 'stremio', 'kai_presence_tests', 'kai_rpc_reconnect_tests', '--parallel')
 Invoke-Native ctest @('--test-dir', $build, '-C', 'Release', '--output-on-failure', '--no-tests=error')
+Invoke-Native python @((Join-Path $PSScriptRoot 'preserve-resources.py'),
+    (Join-Path $kaiRoot 'stremio.exe'), (Join-Path $build 'Release/stremio.exe'))
 
 # Keep every original runtime file, including Kai's MPV/SVP/Node/WebView2 files.
 $packageName = 'Stremio-Kai-4.8.0-RPC-Portable-x64'
@@ -142,6 +123,7 @@ Copy-Item (Join-Path $source 'deps/discord-rpc/thirdparty/rapidjson/license.txt'
     custom_commit = $customCommit
     native_source_commit = $pins.native.commit
     original_exe_sha256 = $originalExeHash.ToLowerInvariant()
+    native_identity = 'Community 5.0.21 code/data match; all original Kai PE resources preserved'
     custom_exe_sha256 = (Get-FileHash (Join-Path $package 'stremio.exe')).Hash.ToLowerInvariant()
     vcpkg_commit = $vcpkgCommit
     built_at_utc = [DateTime]::UtcNow.ToString('o')

@@ -13,8 +13,8 @@ configuration, webmods and existing application logic are unchanged.
 | Source preparation against clean pinned native/SDK checkouts | Passed; prepared adapter bytes match tested source |
 | Native and SDK patch whitespace validation | Passed |
 | Python preparation script and workflow YAML parsing | Passed |
-| PowerShell execution / Windows CMake compilation | Not run: no Windows build runner available yet |
-| Official Kai native EXE versus documented Community base | Not run: enforced before substitution by the Windows workflow |
+| PowerShell execution / Windows CMake compilation | Windows runner available; build in progress |
+| Official Kai native EXE versus documented Community base | All non-resource sections match Community 5.0.21 byte for byte; Kai has different embedded resources |
 | Complete Windows portable ZIP / installer | Not generated |
 | Live Discord compact activity from another account | Not run |
 | Live expanded activity and full playback regressions | Not run |
@@ -24,14 +24,12 @@ movie/show title in `details`, while retaining expanded episode metadata,
 artwork, both buttons and valid timestamps. They do not prove that any particular
 Discord client renders these fields as intended.
 
-The user has now created `https://github.com/NargaFRZ/Stremio-Kai`. Its main
-branch matches the inspected upstream commit, and the user's repository role
-includes push permission. However, GitHub rejected the prepared tree upload
-with HTTP 403, `Resource not accessible by integration`. The app's installation
-and installed-account lists do not include `NargaFRZ`. No remote changes or
-Windows workflow runs were created. The connected GitHub app must be installed
-or configured for that account and granted access to this fork before the
-prepared branch/workflow can be pushed.
+The authorized changes are on `NargaFRZ/Stremio-Kai`, branch
+`codex/discord-media-title`. GitHub access is working and Windows workflow runs
+have started. Run `34730381554` established the native code/data identity; the
+initial whole-file comparison correctly detected Kai's different PE resources.
+The packaging workflow now verifies native code/data identity and preserves all
+original Kai resources, with a byte-for-byte verification after copying them.
 
 After a successful package is produced, the separate desktop checklist is still
 required. This task is **incomplete** until the usable Windows package exists
