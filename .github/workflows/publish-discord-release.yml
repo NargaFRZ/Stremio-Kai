@@ -1,0 +1,31 @@
+name: Publish tested Discord Windows portable
+
+on:
+  push:
+    branches: [codex/discord-media-title]
+    paths:
+      - '.github/workflows/publish-discord-release.yml'
+      - 'release/discord-rpc/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: publish-discord-rpc-v4.8.0-rpc1
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'NargaFRZ/Stremio-Kai' && github.ref == 'refs/heads/codex/discord-media-title'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify and publish the existing tested build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 release/discord-rpc/publish.py
