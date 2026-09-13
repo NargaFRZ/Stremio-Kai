@@ -31,3 +31,14 @@ jobs:
           if-no-files-found: error
           compression-level: 0
           retention-days: 30
+      - name: Retain original native binaries for build diagnosis
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-identity-diagnostics
+          path: |
+            .build-rpc/kai-original/**/stremio.exe
+            .build-rpc/community-original/**/stremio.exe
+          if-no-files-found: ignore
+          include-hidden-files: true
+          retention-days: 7
