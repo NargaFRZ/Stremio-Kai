@@ -4,11 +4,11 @@
 
 This is a focused change to the existing native Discord integration, with a
 Windows portable packaging workflow. It is not a replacement Stremio app.
-The local native-adapter/SDK-serializer tests pass. A Windows build and actual
-Discord desktop visual acceptance have **not yet been performed**. A successful
-CI artifact contains a build manifest with its Windows test result. It must
-still pass the included desktop checklist before compact or expanded rendering
-can be called verified.
+The local native-adapter/SDK-serializer tests pass. A successful CI artifact
+contains a build manifest with its Windows compilation, test and packaged-app
+startup results. Actual Discord desktop visual acceptance has **not been
+performed**. The package must still pass the included desktop checklist before
+compact or expanded rendering can be called verified.
 
 ## Inspection and the relevant field
 
@@ -95,7 +95,7 @@ verifies that unrelated runtime files are unchanged. It does not change settings
 tray behavior, updater configuration or other application logic. The current
 GitHub configuration is overlaid on a fresh official portable release.
 
-Expected successful output (these files have **not yet been generated**):
+Successful workflow output:
 
 - `dist-rpc/Stremio-Kai-4.8.0-RPC-Portable-x64.zip`
 - `dist-rpc/Stremio-Kai-RPC-Sources.zip`
@@ -122,8 +122,8 @@ actual vcpkg commit, which may vary with the GitHub runner image.
 
 The build is custom and unsigned. Existing upstream updater behavior is retained;
 an upstream update that replaces the native executable may overwrite this change.
-No live Windows, playback, startup, installer, Discord restart, or other-account
-rendering result should be inferred from the serializer tests.
+No real-media playback, installer, Discord restart, or other-account rendering
+result should be inferred from the automated tests.
 
 ## Tests
 
@@ -144,3 +144,10 @@ Local Linux validation used GCC C++20 with AddressSanitizer and
 UndefinedBehaviorSanitizer. LeakSanitizer was disabled because this execution
 environment runs under ptrace; the address/undefined checks remained enabled.
 This validates code and RPC payloads, not live Discord desktop acceptance.
+
+The Windows build also launches a disposable copy of the complete portable
+twice. A local page exercises the existing WebView activity event path for a
+movie, paused TV episode, anime and clear. The check requires a native window,
+MPV initialization, bundled Node and WebView2 startup, expected native Discord
+update logs, and normal shutdown on both launches. It does not play actual media
+or connect to Discord, and it does not change the distributed package's settings.
