@@ -1,0 +1,33 @@
+name: Stremio-Kai Discord Windows portable
+
+on:
+  push:
+    branches: [codex/discord-media-title]
+    paths: ['build/discord/**', 'build/windows/**', 'tests/**', '.github/workflows/discord-windows.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portable:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Build and test existing Kai portable
+        shell: pwsh
+        run: ./build/windows/build-portable.ps1
+      - name: Upload portable, source, and checksums
+        uses: actions/upload-artifact@v4
+        with:
+          name: Stremio-Kai-4.8.0-RPC-Windows-x64
+          path: |
+            dist-rpc/*.zip
+            dist-rpc/SHA256SUMS.txt
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30
