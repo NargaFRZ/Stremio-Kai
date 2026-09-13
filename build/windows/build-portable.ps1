@@ -63,6 +63,22 @@ $communityRoot = Find-AppRoot (Join-Path $work 'community-original')
 $originalExeHash = (Get-FileHash (Join-Path $kaiRoot 'stremio.exe') -Algorithm SHA256).Hash
 $communityExeHash = (Get-FileHash (Join-Path $communityRoot 'stremio.exe') -Algorithm SHA256).Hash
 if ($originalExeHash -ne $communityExeHash) {
+    Invoke-Native python @((Join-Path $PSScriptRoot 'inspect-native.py'),
+        (Join-Path $kaiRoot 'stremio.exe'), (Join-Path $communityRoot 'stremio.exe'))
+    $candidates = Get-Content (Join-Path $PSScriptRoot 'native-candidates.json') -Raw | ConvertFrom-Json
+    foreach ($candidate in $candidates) {
+        $installer = Join-Path $work "$($candidate.tag).exe"
+        $expanded = Join-Path $work $candidate.tag
+        Get-VerifiedArchive $candidate $installer
+        Invoke-Native $sevenZip @('x', $installer, "-o$expanded", '-y')
+        Get-ChildItem -LiteralPath $expanded -Filter stremio.exe -File -Recurse | ForEach-Object {
+            Write-Host "Inspecting candidate $($candidate.tag): $($_.FullName)"
+            Invoke-Native python @((Join-Path $PSScriptRoot 'inspect-native.py'), $_.FullName)
+            if ((Get-FileHash -LiteralPath $_.FullName).Hash -eq $originalExeHash) {
+                Write-Host "EXACT NATIVE MATCH: $($candidate.tag) installer"
+            }
+        }
+    }
     throw @"
 Kai's native stremio.exe differs from the documented Community 5.0.21 base.
 Packaging has stopped before replacing anything. Obtain matching native source
